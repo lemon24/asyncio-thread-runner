@@ -22,16 +22,16 @@ class ThreadRunner:
         self._lazy_init()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-
-    def close(self):
+    def __exit__(self, *exc_info):
         try:
-            self._stack.close()
+            return self._stack.__exit__(*exc_info)
         finally:
             loop = self.get_loop()
             loop.call_soon_threadsafe(loop.stop)
             self._thread.join()
+
+    def close(self):
+        self.__exit__(None, None, None)
 
     def get_loop(self):
         self._lazy_init()
@@ -55,38 +55,46 @@ class ThreadRunner:
                 loop.run_forever()
 
         self._thread = threading.Thread(
-            target=run_forever, name='LoopThread', daemon=True
+            target=run_forever, name='ThreadRunner', daemon=True
         )
         self._thread.start()
         loop_created.wait()
 
-    @contextlib.contextmanager
-    def wrap_context(self, cm=None, factory=None):
+    def wrap_context(self, cm=None, *, factory=None):
+        if (cm is None) + (factory is None) != 1:
+            raise TypeError("exactly one of cm or factory must be given")
         if cm is None:
-            cm = self.run(call_async(factory))
+            cm = self.run(_call_async(factory))
+        return self._wrap_context(cm)
+
+    @contextlib.contextmanager
+    def _wrap_context(self, cm):
+        # https://snarky.ca/unravelling-the-with-statement/
+
         aenter = type(cm).__aenter__
         aexit = type(cm).__aexit__
         value = self.run(aenter(cm))
+
         try:
             yield value
-        except:
+        except BaseException:
             if not self.run(aexit(cm, *sys.exc_info())):
                 raise
         else:
             self.run(aexit(cm, None, None, None))
 
-    def enter_context(self, cm=None, factory=None):
-        cm = self.wrap_context(cm=cm, factory=factory)
+    def enter_context(self, cm=None, *, factory=None):
+        cm = self.wrap_context(cm, factory=factory)
         return self._stack.enter_context(cm)
 
     def wrap_iter(self, it):
         it = aiter(it)
         while True:
             try:
-                yield runner.run(anext(it))
+                yield self.run(anext(it))
             except StopAsyncIteration:
                 break
 
 
-async def call_async(callable):
+async def _call_async(callable):
     return callable()
