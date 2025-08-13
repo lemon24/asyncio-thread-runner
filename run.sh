@@ -30,10 +30,16 @@ function test {
 }
 
 function coverage {
-    command coverage run -m pytest -v "$@"
-    echo
+    coverage-run
+    coverage-report
+}
+
+function coverage-run {
+    command coverage run "$@" -m pytest -v
+}
+
+function coverage-report {
     [[ -z ${CI+x} ]] && command coverage html
-    echo
     command coverage report --skip-covered --show-missing --fail-under 100
 }
 

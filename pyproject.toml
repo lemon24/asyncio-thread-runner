@@ -36,6 +36,7 @@ Issues = "https://github.com/lemon24/asyncio-thread-runner/issues"
 [dependency-groups]
 dev = [
     "pre-commit",
+    "tox",
 ]
 tests = [
     "pytest",
@@ -48,6 +49,9 @@ typing = [
 [tool.coverage.run]
 branch = true
 source = ["asyncio_thread_runner", "tests"]
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
 
 [tool.mypy]
 files = ["src"]
@@ -63,3 +67,45 @@ skip_gitignore = true
 force_single_line = true
 order_by_type = false
 lines_after_imports = 2
+
+[tool.tox]
+env_list = [
+    "coverage-clean",
+    "py314", "py313", "py312", "py311", "pypy311",
+    "coverage-report",
+    "typing",
+]
+
+[tool.tox.env_run_base]
+commands = [["./run.sh", "coverage-run", "--append"]]
+allowlist_externals = ["./run.sh"]
+dependency_groups = ["tests"]
+
+[tool.tox.env.coverage-clean]
+deps = ["coverage"]
+dependency_groups = []
+skip_install = true
+commands = [["coverage", "erase"]]
+
+[tool.tox.env.py314]
+depends = ["coverage-clean"]
+[tool.tox.env.py313]
+depends = ["coverage-clean"]
+[tool.tox.env.py312]
+depends = ["coverage-clean"]
+[tool.tox.env.py311]
+depends = ["coverage-clean"]
+[tool.tox.env.pypy311]
+depends = ["coverage-clean"]
+
+[tool.tox.env.coverage-report]
+deps = ["coverage"]
+dependency_groups = []
+skip_install = true
+commands = [["./run.sh", "coverage-report"]]
+depends = ["py314", "py313", "py312", "py311", "pypy311"]
+
+[tool.tox.env.typing]
+dependency_groups = ["typing"]
+skip_install = true
+commands = [["./run.sh", "typing"]]
