@@ -23,12 +23,15 @@ class ThreadRunner:
         return self
 
     def __exit__(self, *exc_info):
+        thread = self._thread
+        if not thread or not thread.is_alive():
+            return
         try:
             return self._stack.__exit__(*exc_info)
         finally:
             loop = self.get_loop()
             loop.call_soon_threadsafe(loop.stop)
-            self._thread.join()
+            thread.join()
 
     def close(self):
         self.__exit__(None, None, None)

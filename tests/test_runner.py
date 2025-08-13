@@ -1,4 +1,5 @@
 import asyncio
+import warnings
 from contextlib import closing, contextmanager, nullcontext
 
 import pytest
@@ -20,22 +21,26 @@ def identity(x):
 
 
 @pytest.mark.parametrize('closing', [identity, closing])
-def test_lifecycle(closing, recwarn):
+def test_lifecycle(closing):
     runner = ThreadRunner()
 
     with closing(runner) as target:
         assert target is runner
         assert runner.get_loop() is runner._runner.get_loop()
 
-    with pytest.raises(RuntimeError, match="closed"):
-        runner.get_loop()
-    with pytest.raises(RuntimeError, match="closed"):
-        runner.run(double(2))
-    with pytest.raises(RuntimeError, match="closed"):
-        runner.wrap_context(nullcontext()).__enter__()
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', ".* never awaited")
+        with pytest.raises(RuntimeError, match="closed"):
+            runner.get_loop()
+        with pytest.raises(RuntimeError, match="closed"):
+            runner.run(double(2))
+        with pytest.raises(RuntimeError, match="closed"):
+            runner.wrap_context(nullcontext()).__enter__()
+        with pytest.raises(RuntimeError, match="closed"):
+            runner.enter_context(nullcontext())
 
 
-def test_close(monkeypatch):
+def test_close_calls_exit(monkeypatch):
     def exit(self, *args):
         exit.args = args
 
@@ -44,14 +49,17 @@ def test_close(monkeypatch):
     assert exit.args == (None, None, None)
 
 
+def test_close_repeatedly_is_noop():
+    runner = ThreadRunner()
+    runner.run(double(2))
+    runner.close()
+    runner.close()
+
+
 @pytest.fixture
 def runner():
-    runner = ThreadRunner()
-    yield runner
-    try:
-        runner.close()
-    except RuntimeError:
-        pass
+    with ThreadRunner() as runner:
+        yield runner
 
 
 def test_run(runner):
