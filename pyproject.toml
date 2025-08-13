@@ -60,3 +60,7 @@ pretty = true
 profile = "black"
 py_version = 311
 src_paths = ["src", "tests"]
+skip_gitignore = true
+force_single_line = true
+order_by_type = false
+lines_after_imports = 2

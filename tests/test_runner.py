@@ -1,6 +1,8 @@
 import asyncio
 import warnings
-from contextlib import closing, contextmanager, nullcontext
+from contextlib import closing
+from contextlib import contextmanager
+from contextlib import nullcontext
 
 import pytest
 
