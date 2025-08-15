@@ -82,7 +82,7 @@ class make_context:
 
     async def __aenter__(self):
         self.states.append('entered')
-        return self
+        return 'target'
 
     async def __aexit__(self, *exc_info):
         self.states.append('exited')
@@ -132,7 +132,7 @@ def test_wrap_context(wrap_context):
     wrapped = wrap_context(context)
 
     with wrapped as target:
-        assert target is context
+        assert target == 'target'
         assert context.states == ['entered']
 
     assert context.states == ['entered', 'exited']
@@ -151,7 +151,7 @@ def test_wrap_context_factory(runner, wrap_context):
     wrapped = wrap_context(factory=factory)
 
     with wrapped as target:
-        assert target is context
+        assert target == 'target'
         assert context.states == ['entered']
 
     assert context.states == ['entered', 'exited']
@@ -160,8 +160,9 @@ def test_wrap_context_factory(runner, wrap_context):
 
 def test_wrap_context_propagate_exception(wrap_context):
     exc = BaseException('propagate')
+    context = make_context()
     with pytest.raises(BaseException) as excinfo:
-        with wrap_context(make_context()) as context:
+        with wrap_context(context):
             raise exc
     assert excinfo.value is exc
     context.check_exc_info(exc)
@@ -169,7 +170,8 @@ def test_wrap_context_propagate_exception(wrap_context):
 
 def test_wrap_context_suppress_exception(wrap_context):
     exc = BaseException('suppress')
-    with wrap_context(make_context(suppress=True)) as context:
+    context = make_context(suppress=True)
+    with wrap_context(context):
         raise exc
     context.check_exc_info(exc)
 
