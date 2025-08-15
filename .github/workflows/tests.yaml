@@ -1,0 +1,56 @@
+
+name: tests
+
+on:
+  push:
+    paths-ignore: ['README.md']
+  pull_request:
+    paths-ignore: ['README.md']
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - {python: '3.14'}
+          - {python: '3.14', os: windows-latest}
+          - {python: '3.14', os: macos-latest}
+          - {python: '3.13'}
+          - {python: '3.12'}
+          - {python: '3.11'}
+          - {python: 'pypy-3.11'}
+
+    steps:
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          allow-prereleases: true
+
+      - run: pip install --editable . --group tests
+      - run: ./run.sh coverage
+
+  typing:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - run: pip install --editable . --group typing
+      - run: ./run.sh typing

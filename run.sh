@@ -41,7 +41,7 @@ function coverage {
 }
 
 function typing {
-    on-pypy || mypy "$@"
+    mypy "$@"
 }
 
 
@@ -72,23 +72,7 @@ function coverage-report {
 }
 
 
-# CI
-
-function ci-install {
-    pip install --editable . --group tests --group typing
-}
-
-function ci-run {
-    coverage
-    typing
-}
-
-
 # utilities
-
-function on-pypy {
-    [[ $( python -c 'import sys; print(sys.implementation.name)' ) == pypy ]]
-}
 
 function ls-project-files {
     git ls-files "$@"
