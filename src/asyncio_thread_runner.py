@@ -33,8 +33,8 @@ _T = TypeVar('_T')
 
 class ThreadRunner:
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        self._runner = asyncio.Runner(*args, **kwargs)
+    def __init__(self, **kwargs: Any):
+        self._runner = asyncio.Runner(**kwargs)
         self._thread: threading.Thread | None = None
         self._stack = contextlib.ExitStack()
 
