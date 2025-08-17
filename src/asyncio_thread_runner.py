@@ -51,19 +51,16 @@ class ThreadRunner:
         try:
             return self._stack.__exit__(*exc_info)
         finally:
-            loop = self.get_loop()
+            loop = self._runner.get_loop()
             loop.call_soon_threadsafe(loop.stop)
             thread.join()
 
     def close(self) -> None:
         self.__exit__(None, None, None)
 
-    def get_loop(self) -> asyncio.AbstractEventLoop:
-        self._lazy_init()
-        return self._runner.get_loop()
-
     def run(self, coro: Coroutine[Any, Any, _T]) -> _T:
-        loop = self.get_loop()
+        self._lazy_init()
+        loop = self._runner.get_loop()
         return asyncio.run_coroutine_threadsafe(coro, loop).result()
 
     def _lazy_init(self) -> None:

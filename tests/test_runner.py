@@ -1,4 +1,5 @@
 import asyncio
+import threading
 import warnings
 from contextlib import closing
 from contextlib import contextmanager
@@ -28,12 +29,10 @@ def test_lifecycle(closing):
 
     with closing(runner) as target:
         assert target is runner
-        assert runner.get_loop() is runner._runner.get_loop()
+        runner.run(double(2))
 
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', ".* never awaited")
-        with pytest.raises(RuntimeError, match="closed"):
-            runner.get_loop()
         with pytest.raises(RuntimeError, match="closed"):
             runner.run(double(2))
         with pytest.raises(RuntimeError, match="closed"):
@@ -49,6 +48,11 @@ def test_close_calls_exit(monkeypatch):
     monkeypatch.setattr(ThreadRunner, '__exit__', exit)
     ThreadRunner().close()
     assert exit.args == (None, None, None)
+
+
+def test_close_without_lazy_init_is_noop():
+    runner = ThreadRunner()
+    runner.close()
 
 
 def test_close_repeatedly_is_noop():
@@ -145,7 +149,8 @@ def test_wrap_context_factory(runner, wrap_context):
     def factory():
         nonlocal context
         context = make_context()
-        assert asyncio.get_running_loop() is runner.get_loop()
+        assert threading.current_thread() is runner._thread
+        assert asyncio.get_running_loop() is runner._runner.get_loop()
         return context
 
     wrapped = wrap_context(factory=factory)
