@@ -10,6 +10,7 @@ import contextlib
 import sys
 import threading
 from typing import Any
+from typing import final
 from typing import Self
 from typing import TYPE_CHECKING
 from typing import TypeVar
@@ -31,6 +32,7 @@ __version__ = "0.1.dev0"
 _T = TypeVar('_T')
 
 
+@final
 class ThreadRunner:
 
     def __init__(self, **kwargs: Any):
