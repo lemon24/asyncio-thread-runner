@@ -54,7 +54,11 @@ include = [
     "CHANGES.md",
     "run.sh",
     "tests/",
+    "*/conftest.py",
 ]
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
 
 [tool.coverage.run]
 branch = true
@@ -65,6 +69,7 @@ source = ["src", "*/site-packages"]
 
 [tool.mypy]
 files = ["src"]
+exclude = [".*/conftest.py"]
 show_error_codes = true
 pretty = true
 strict = true

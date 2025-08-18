@@ -73,7 +73,15 @@ class ThreadRunner:
         self.__exit__(None, None, None)
 
     def run(self, coro: Coroutine[Any, Any, _T]) -> _T:
-        """Run a coroutine and return the result."""
+        """Run a coroutine and return the result.
+
+        >>> async def double(i):
+        ...     return i * 2
+        ...
+        >>> runner.run(double(2))
+        4
+
+        """
         # XXX: what about context=? run_coroutine_threadsafe doesn't have it
         self._lazy_init()
         loop = self._runner.get_loop()
@@ -106,6 +114,19 @@ class ThreadRunner:
         If a callable is provided, call it in the event loop thread
         and use the returned async context manager instead.
 
+        >>> @asynccontextmanager
+        ... async def make_context():
+        ...     print('enter')
+        ...     yield 'value'
+        ...     print('exit')
+        ...
+        >>> with runner.wrap_context(make_context()) as target:
+        ...     print(target)
+        ...
+        enter
+        value
+        exit
+
         """
         if not isinstance(cm, AsyncCM):
             cm = self.run(_call_async(cm))
@@ -135,12 +156,34 @@ class ThreadRunner:
         If a callable is provided, call it in the event loop thread
         and use the returned async context manager instead.
 
+        >>> @asynccontextmanager
+        ... async def make_context():
+        ...     print('enter')
+        ...     yield 'value'
+        ...     print('exit')
+        ...
+        >>> with ThreadRunner() as runner:
+        ...     print(runner.enter_context(make_context()))
+        ...
+        enter
+        value
+        exit
+
         """
         wrapped = self.wrap_context(cm)
         return self._stack.enter_context(wrapped)
 
     def wrap_iter(self, it: AsyncIterable[_T]) -> Iterable[_T]:
-        """Convert an async iterable into a sync wrapper."""
+        """Convert an async iterable into a sync wrapper.
+
+        >>> async def arange(*args):
+        ...     for n in range(*args):
+        ...         yield n
+        ...
+        >>> list(runner.wrap_iter(arange(4)))
+        [0, 1, 2, 3]
+
+        """
         it = aiter(it)
         while True:
             try:
