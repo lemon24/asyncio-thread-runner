@@ -8,9 +8,12 @@ See the ThreadRunner class for details.
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import sys
 import threading
+from contextlib import AbstractAsyncContextManager as AsyncCM
+from contextlib import AbstractContextManager as CM
+from contextlib import contextmanager
+from contextlib import ExitStack
 from typing import Any
 from typing import final
 from typing import Self
@@ -24,8 +27,6 @@ if TYPE_CHECKING:
     from collections.abc import Coroutine
     from collections.abc import Iterable
     from collections.abc import Iterator
-    from contextlib import AbstractAsyncContextManager
-    from contextlib import AbstractContextManager
 
 
 __version__ = "0.1.dev0"
@@ -50,7 +51,7 @@ class ThreadRunner:
     def __init__(self, **kwargs: Any):
         self._runner = asyncio.Runner(**kwargs)
         self._thread: threading.Thread | None = None
-        self._stack = contextlib.ExitStack()
+        self._stack = ExitStack()
 
     def __enter__(self) -> Self:
         self._lazy_init()
@@ -73,6 +74,7 @@ class ThreadRunner:
 
     def run(self, coro: Coroutine[Any, Any, _T]) -> _T:
         """Run a coroutine and return the result."""
+        # XXX: what about context=? run_coroutine_threadsafe doesn't have it
         self._lazy_init()
         loop = self._runner.get_loop()
         return asyncio.run_coroutine_threadsafe(coro, loop).result()
@@ -98,27 +100,19 @@ class ThreadRunner:
         self._thread.start()
         loop_created.wait()
 
-    def wrap_context(
-        self,
-        cm: AbstractAsyncContextManager[_T] | None = None,
-        *,
-        factory: Callable[[], AbstractAsyncContextManager[_T]] | None = None,
-    ) -> AbstractContextManager[_T]:
+    def wrap_context(self, cm: AsyncCM[_T] | Callable[[], AsyncCM[_T]], /) -> CM[_T]:
         """Convert an async context manager into a sync wrapper.
 
-        If a factory callable returning an async context manager is provided,
-        call it in the event loop thread and use that context manager instead.
+        If a callable is provided, call it in the event loop thread
+        and use the returned async context manager instead.
 
         """
-        if (cm is None) + (factory is None) != 1:
-            raise TypeError("exactly one of cm or factory must be given")
-        if cm is None:
-            assert factory is not None
-            cm = self.run(_call_async(factory))
+        if not isinstance(cm, AsyncCM):
+            cm = self.run(_call_async(cm))
         return self._wrap_context(cm)
 
-    @contextlib.contextmanager
-    def _wrap_context(self, cm: AbstractAsyncContextManager[_T]) -> Iterator[_T]:
+    @contextmanager
+    def _wrap_context(self, cm: AsyncCM[_T]) -> Iterator[_T]:
         # https://snarky.ca/unravelling-the-with-statement/
 
         aenter = type(cm).__aenter__
@@ -133,21 +127,16 @@ class ThreadRunner:
         else:
             self.run(aexit(cm, None, None, None))
 
-    def enter_context(
-        self,
-        cm: AbstractAsyncContextManager[_T] | None = None,
-        *,
-        factory: Callable[[], AbstractAsyncContextManager[_T]] | None = None,
-    ) -> _T:
+    def enter_context(self, cm: AsyncCM[_T] | Callable[[], AsyncCM[_T]], /) -> _T:
         """Enter an async context manager and return its value.
 
         Exit the entered context manager when the runner is closed.
 
-        If a factory callable returning an async context manager is provided,
-        call it in the event loop thread and use that context manager instead.
+        If a callable is provided, call it in the event loop thread
+        and use the returned async context manager instead.
 
         """
-        wrapped = self.wrap_context(cm, factory=factory)
+        wrapped = self.wrap_context(cm)
         return self._stack.enter_context(wrapped)
 
     def wrap_iter(self, it: AsyncIterable[_T]) -> Iterable[_T]:

@@ -53,7 +53,7 @@ with ThreadRunner() as runner:
     # enter_context() will exit the context on runner shutdown;
     # because instantiating ClientSession requires a running event loop,
     # we pass it as a factory instead of calling it in the main thread
-    session = runner.enter_context(factory=aiohttp.ClientSession)
+    session = runner.enter_context(aiohttp.ClientSession)
 
     # session.get() returns an async context manager...
     request = session.get('https://death.andgravity.com/asyncio-bridge')

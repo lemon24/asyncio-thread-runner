@@ -153,7 +153,7 @@ def test_wrap_context_factory(runner, wrap_context):
         assert asyncio.get_running_loop() is runner._runner.get_loop()
         return context
 
-    wrapped = wrap_context(factory=factory)
+    wrapped = wrap_context(factory)
 
     with wrapped as target:
         assert target == 'target'
@@ -181,11 +181,6 @@ def test_wrap_context_suppress_exception(wrap_context):
     context.check_exc_info(exc)
 
 
-def test_wrap_context_no_args(wrap_context):
-    with pytest.raises(TypeError, match='exactly one'):
-        wrap_context()
-
-
-def test_wrap_context_too_many_args(wrap_context):
-    with pytest.raises(TypeError, match='exactly one'):
-        wrap_context(nullcontext(), factory=nullcontext)
+def test_wrap_context_type_error(wrap_context):
+    with pytest.raises(TypeError):
+        wrap_context('')
