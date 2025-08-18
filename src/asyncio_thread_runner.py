@@ -1,5 +1,5 @@
 """
-Run async Python code from sync code.
+Run async code from sync code.
 
 See the ThreadRunner class for details.
 

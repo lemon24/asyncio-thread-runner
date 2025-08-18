@@ -5,7 +5,7 @@
 [![PyPI status](https://img.shields.io/pypi/v/asyncio-thread-runner.svg)](https://pypi.python.org/pypi/asyncio-thread-runner)
 
 
-**asyncio-thread-runner** allows you to run async Python code from sync code.
+**asyncio-thread-runner** allows you to run async code from sync code.
 
 This is useful when you're doing some sync stuff, but:
 
