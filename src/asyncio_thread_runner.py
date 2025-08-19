@@ -22,6 +22,7 @@ from typing import TypeVar
 
 
 if TYPE_CHECKING:
+    import concurrent.futures as cf
     from collections.abc import AsyncIterable
     from collections.abc import Callable
     from collections.abc import Coroutine
@@ -83,11 +84,17 @@ class ThreadRunner:
 
         """
         # XXX: what about context=? run_coroutine_threadsafe doesn't have it
+        return self.run_as_future(coro).result()
+
+    def run_as_future(self, coro: Coroutine[Any, Any, _T]) -> cf.Future[_T]:
+        """Submit a coroutine to the runner event loop.
+
+        Return a threadsafe concurrent.futures.Future to wait for the result.
+
+        """
         self._lazy_init()
         loop = self._runner.get_loop()
-        return asyncio.run_coroutine_threadsafe(coro, loop).result()
-
-    # TODO: run() variant that returns the future
+        return asyncio.run_coroutine_threadsafe(coro, loop)
 
     def _lazy_init(self) -> None:
         if self._thread:
