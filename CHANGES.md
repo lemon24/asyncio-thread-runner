@@ -6,6 +6,6 @@ Changelog
 Version 1.0
 -----------
 
-Unreleased
+Released 2025-08-19
 
 * Initial release.
