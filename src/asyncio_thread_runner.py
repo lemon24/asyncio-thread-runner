@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-__version__ = "0.1.dev0"
+__version__ = "0.1.dev2"
 
 
 _T = TypeVar('_T')
