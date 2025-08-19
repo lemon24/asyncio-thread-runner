@@ -3,6 +3,12 @@ Changelog
 =========
 
 
+Version 1.1
+-----------
+
+Unreleased
+
+
 Version 1.0
 -----------
 
