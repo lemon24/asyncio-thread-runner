@@ -79,6 +79,8 @@ def test_wrap_iter(runner):
 
 
 class make_context:
+    """Test async context manager."""
+
     def __init__(self, suppress=False):
         self.suppress = suppress
         self.states = []
@@ -94,10 +96,19 @@ class make_context:
         return self.suppress
 
     def check_exc_info(self, exc):
+        """Check exc matches recorded exception info."""
         exc_type, exc_value, traceback = self.exc_info
         assert exc_type is type(exc)
         assert exc_value is exc
         assert exc.__traceback__ in walk_traceback(traceback)
+
+    def check_context(self, wrapped):
+        """Check wrapper context manager (sync) against self."""
+        with wrapped as target:
+            assert target == 'target'
+            assert self.states == ['entered']
+        assert self.states == ['entered', 'exited']
+        assert self.exc_info == (None, None, None)
 
 
 def walk_traceback(tb):
@@ -134,13 +145,7 @@ def wrap_context(runner, request):
 def test_wrap_context(wrap_context):
     context = make_context()
     wrapped = wrap_context(context)
-
-    with wrapped as target:
-        assert target == 'target'
-        assert context.states == ['entered']
-
-    assert context.states == ['entered', 'exited']
-    assert context.exc_info == (None, None, None)
+    context.check_context(wrapped)
 
 
 def test_wrap_context_factory(runner, wrap_context):
@@ -154,13 +159,7 @@ def test_wrap_context_factory(runner, wrap_context):
         return context
 
     wrapped = wrap_context(factory)
-
-    with wrapped as target:
-        assert target == 'target'
-        assert context.states == ['entered']
-
-    assert context.states == ['entered', 'exited']
-    assert context.exc_info == (None, None, None)
+    context.check_context(wrapped)
 
 
 def test_wrap_context_propagate_exception(wrap_context):
