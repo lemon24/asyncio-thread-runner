@@ -31,6 +31,8 @@ Changelog = "https://github.com/lemon24/asyncio-thread-runner/blob/main/CHANGES.
 
 [dependency-groups]
 dev = [
+    {include-group = "tests"},
+    {include-group = "typing"},
     "pre-commit",
     "tox",
     "flit",

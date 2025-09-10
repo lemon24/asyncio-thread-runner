@@ -24,10 +24,7 @@ readonly SCRIPT="$PROJECT_ROOT/$( basename "$0" )"
 # main development workflow
 
 function install {
-    pip install \
-        --editable . \
-        --group dev --group tests --group typing \
-        --upgrade --upgrade-strategy eager
+    pip install -e . --group dev --upgrade --upgrade-strategy eager
     pre-commit install --install-hooks
 }
 
