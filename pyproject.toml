@@ -69,6 +69,11 @@ source = ["asyncio_thread_runner", "tests"]
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 
+[tool.coverage.report]
+skip_covered = true
+show_missing = true
+fail_under = 100
+
 [tool.mypy]
 files = ["src"]
 exclude = [".*/conftest.py"]
@@ -94,8 +99,7 @@ env_list = [
 ]
 
 [tool.tox.env_run_base]
-commands = [["./run.sh", "coverage-run", "--append"]]
-allowlist_externals = ["./run.sh"]
+commands = [["coverage", "run", "--append", "-m", "pytest"]]
 dependency_groups = ["tests"]
 
 [tool.tox.env.coverage-clean]
@@ -119,10 +123,10 @@ depends = ["coverage-clean"]
 deps = ["coverage"]
 dependency_groups = []
 skip_install = true
-commands = [["./run.sh", "coverage-report"]]
+commands = [["coverage", "html"], ["coverage", "report"]]
 depends = ["py314", "py313", "py312", "py311", "pypy311"]
 
 [tool.tox.env.typing]
 dependency_groups = ["typing"]
 skip_install = true
-commands = [["./run.sh", "typing"]]
+commands = [["mypy"]]

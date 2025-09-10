@@ -32,9 +32,15 @@ function test {
     pytest "$@"
 }
 
+function test-all {
+    tox p "$@"
+}
+
 function coverage {
-    coverage-run
-    coverage-report
+    unset -f coverage
+    coverage run -m pytest "$@"
+    coverage html
+    coverage report
 }
 
 function typing {
@@ -43,10 +49,6 @@ function typing {
 
 
 # "watch" versions of the main commands
-
-function watch {
-    entr-project-files -cdr "$SCRIPT" "$@"
-}
 
 function test-dev {
     watch test "$@"
@@ -57,23 +59,10 @@ function typing-dev {
 }
 
 
-# low level commands
-
-function coverage-run {
-    command coverage run "$@" -m pytest -v
-}
-
-function coverage-report {
-    [[ -z ${CI+x} ]] && command coverage html
-    command coverage report --skip-covered --show-missing --fail-under 100
-}
-
-
 # utilities
 
-function ls-project-files {
-    git ls-files "$@"
-    git ls-files --exclude-standard --others "$@"
+function watch {
+    entr-project-files -cdr "$SCRIPT" "$@"
 }
 
 function entr-project-files {
@@ -84,6 +73,11 @@ function entr-project-files {
             break
         fi
     done
+}
+
+function ls-project-files {
+    git ls-files "$@"
+    git ls-files --exclude-standard --others "$@"
 }
 
 

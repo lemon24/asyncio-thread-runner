@@ -38,8 +38,9 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
 
-      - run: pip install --editable . --group tests
-      - run: ./run.sh coverage
+      - run: pip install -e . --group tests
+      - run: coverage run -m pytest
+      - run: coverage report
 
   typing:
     runs-on: ubuntu-latest
@@ -52,5 +53,5 @@ jobs:
         with:
           python-version-file: 'pyproject.toml'
 
-      - run: pip install --editable . --group typing
-      - run: ./run.sh typing
+      - run: pip install -e . --group typing
+      - run: mypy
