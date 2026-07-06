@@ -20,7 +20,6 @@ from typing import Self
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
-
 if TYPE_CHECKING:
     import concurrent.futures as cf
     from collections.abc import AsyncIterable
